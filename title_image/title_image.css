@@ -112,6 +112,10 @@
     color: #fff;
 }
 
+.reactions p {
+    margin-right: 5px;
+}
+
 .share {
     display: table-cell;
     vertical-align: middle;

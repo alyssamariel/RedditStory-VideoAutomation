@@ -1,7 +1,8 @@
 import requests
 from requests.exceptions import JSONDecodeError
+from pathlib import Path
 
-def streamlabs_tts(text: str, voice: str, output_file: str = "output.mp3"):
+def streamlabs_tts(text: str, voice: str, output_file):
     url = "https://streamlabs.com/polly/speak"
 
     payload = {
