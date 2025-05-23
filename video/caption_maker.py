@@ -5,13 +5,15 @@ from moviepy.editor import ImageClip
 import numpy as np
 import os
 
-def get_transcribed_text(filename, guide_text, model_size="small"):
+def get_transcribed_text(filename, guide_text="", model_size="small"):
     audio = whisper.load_audio(filename)
     model = whisper.load_model(model_size, device="cpu")
     result = whisper.transcribe(model,audio,language="en",initial_prompt=guide_text)
     return result
 
-def get_text_clips(text):
+
+# return an array of imageclips with text
+def get_text_clips(text, offset_seconds=0):
     # settings
     font_path="fonts/Poppins-Bold.ttf"
     font_size=100
@@ -31,8 +33,8 @@ def get_text_clips(text):
     for segment in segments:
         for word in segment["words"]:
             word_text = word["text"]
-            start = word["start"]
-            end = word["end"]
+            start = word["start"] + offset_seconds
+            end = word["end"] + offset_seconds
 
             # transparent background base
             img = Image.new("RGBA", video_size, (0, 0, 0, 0))
@@ -66,9 +68,6 @@ def get_text_clips(text):
                     stroke_width=stroke_width,
                     stroke_fill=stroke_color
                 )
-
-            # Downscale and keep alpha
-            #img = img.resize(video_size, Image.LANCZOS)
 
             # convert to image clip with transparency
             clip = ImageClip(np.array(img), ismask=False).set_start(start).set_end(end).set_position("center")

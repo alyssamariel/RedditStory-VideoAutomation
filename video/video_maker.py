@@ -3,14 +3,13 @@ import os
 from PIL import Image, ImageDraw
 import numpy as np
 
-def generate_reddit_video(folder_path, output_audio, title_image_path):
-    audio_clip = AudioFileClip(str(output_audio)) 
-    video_path = folder_path / "temp_image.mp4"
+def generate_title_video(title_image_path, title_audio_path):
+    audio_clip = AudioFileClip(str(title_audio_path)) 
+    video_path = (os.path.splitext(title_image_path)[0] + ".mp4")
 
     # settings
-    final_size = (1080, 1920)
     scale_duration = audio_clip.duration 
-    fade_duration = 0.5
+    fade_duration = 0.25
     corner_radius = 30
     total_duration = scale_duration + fade_duration
 
@@ -18,7 +17,9 @@ def generate_reddit_video(folder_path, output_audio, title_image_path):
     clip = CompositeVideoClip([ImageClip(str(title_image_path)).set_duration(total_duration)])
     clip.write_videofile(str(video_path), fps=24)
 
-    title_clip = VideoFileClip(str(video_path)).without_audio()
+    # add the title audio in the title image
+    title_clip = VideoFileClip(str(video_path))
+    title_clip = title_clip.set_audio(audio_clip)
 
     # rounded corners
     def make_rounded_mask(size, radius):
@@ -46,16 +47,15 @@ def generate_reddit_video(folder_path, output_audio, title_image_path):
     # fadeout animation
     title_clip = title_clip.crossfadeout(fade_duration)
 
-    # background video
-    background = ColorClip(final_size, color=(255, 255, 255)).set_duration(total_duration)
+    return title_clip
 
-    # final video
-    video = CompositeVideoClip([background, title_clip])
-    video = video.set_audio(audio_clip)
+def compile_final_video(file_name, video_background, title_clip, text_clips, all_comments_path):
+    comments_audio = AudioFileClip(str(all_comments_path)).set_start(title_clip.duration)
+    
+    # combine the audio and video of the title and comments
+    final_video = CompositeVideoClip([video_background, title_clip] + text_clips)
+    final_audio = CompositeAudioClip([title_clip.audio, comments_audio])
 
-    video.write_videofile("final.mp4", fps=24)
-
-    # cleanup
-    title_clip.close()
-    if os.path.exists(str(video_path)):
-        os.remove(str(video_path))
+    # set audio and duration and render
+    final_video = final_video.set_audio(final_audio).set_duration(max(final_video.duration, title_clip.duration + comments_audio.duration))
+    final_video.write_videofile((file_name + ".mp4"), fps=24)
