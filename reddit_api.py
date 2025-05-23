@@ -12,16 +12,26 @@ reddit = praw.Reddit(
     user_agent = config["reddit"]["user_agent"]
 )
 
+# get reddit object
+def get_reddit_object(url):
+    submission = reddit.submission(url=url)
+    return submission
+
 # get reddit post title for title card and voiceover
 def get_reddit_post_title(url):
     submission = reddit.submission(url=url)
     return submission.title
 
+# get reddit post id for the folder name
+def get_reddit_post_id(url):
+    submission = reddit.submission(url=url)
+    return submission.name
+
 
 # get reddit comments for the voiceover
 def get_reddit_post_comments(url):
     submission = reddit.submission(url=url)
-    submission.comments.replace_more(limit=50)
+    submission.comments.replace_more(limit=10)
     
     all_comments = submission.comments.list()
     selected_comments = []

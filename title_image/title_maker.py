@@ -42,10 +42,6 @@ def generate_reddit_title_image (submission):
         p = soup.find("p", id=field_id)
         if p:
             p.string = html.escape(str(value))
-
-    title_p = soup.find("p", id="title")
-    if title_p:
-        title_p.string = html.escape(submission.title)
     
     # save changes
     with open(html_template_path, "w", encoding="utf-8") as file:
