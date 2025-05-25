@@ -4,11 +4,20 @@ from PIL import Image, ImageDraw, ImageFont
 from moviepy.editor import ImageClip
 import numpy as np
 import os
+import re
 
 def get_transcribed_text(filename, guide_text="", model_size="small"):
+    print(guide_text)
     audio = whisper.load_audio(filename)
     model = whisper.load_model(model_size, device="cpu")
-    result = whisper.transcribe(model,audio,language="en",initial_prompt=guide_text)
+    result = whisper.transcribe(
+        model,
+        audio,
+        language="en",
+        temperature=0.0,
+        beam_size=5,
+        initial_prompt=guide_text
+    )
     return result
 
 

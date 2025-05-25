@@ -48,8 +48,7 @@ combine_audio_clips(all_comments_path, comment_audio_paths)
 # generate title image animation
 title_clip = generate_title_video(title_image_path, title_audio_path)
 
-# generate captions
-transcribed_text = get_transcribed_text(all_comments_path)
+transcribed_text = get_transcribed_text(all_comments_path, all_comments_string)
 text_clips = get_text_clips(transcribed_text, title_clip.duration)
 
 # background
