@@ -2,24 +2,34 @@ from moviepy.editor import *
 import os
 from PIL import Image, ImageDraw
 import numpy as np
+import configparser
 
-def generate_title_video(title_image_path, title_audio_path):
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+def generate_title_video(title_image_path, title_audio_path, background=(1080, 1920)):
     audio_clip = AudioFileClip(str(title_audio_path)) 
     video_path = (os.path.splitext(title_image_path)[0] + ".mp4")
 
-    # settings
-    scale_duration = audio_clip.duration 
-    fade_duration = 0.25
+    # scale settings
+    scale_duration = float(config["title"]["scale_duration"])
+    start_scale = float(config["title"]["start_scale"])
+    end_scale = float(config["title"]["end_scale"])
+
+    # outro animation settings
+    outro_duration = float(config["title"]["outro_duration"])
+    outro_animation = config["title"]["outro_animation"]
+
+    # other setings
     corner_radius = 30
-    total_duration = scale_duration + fade_duration
+    total_duration = audio_clip.duration + outro_duration
+    video_width = background[0]
 
     # imageclip title
     clip = CompositeVideoClip([ImageClip(str(title_image_path)).set_duration(total_duration)])
     clip.write_videofile(str(video_path), fps=24)
 
-    # add the title audio in the title image
     title_clip = VideoFileClip(str(video_path))
-    title_clip = title_clip.set_audio(audio_clip)
 
     # rounded corners
     def make_rounded_mask(size, radius):
@@ -32,20 +42,46 @@ def generate_title_video(title_image_path, title_audio_path):
     mask = make_rounded_mask(title_clip.size, radius=corner_radius)
     title_clip = title_clip.set_mask(ImageClip(mask, ismask=True).set_duration(total_duration))
 
-    # scale animation
+    # resize animation
     def resize(t):
         if t <= scale_duration:
-            start_scale = 0.9
-            end_scale = 1.1
-            return start_scale + (t / scale_duration) * (end_scale - start_scale)
+            progress = t / scale_duration
+            eased = progress ** 2  # ease-in
+            return start_scale + eased * (end_scale - start_scale)
         else:
-            return 1.1
+            return end_scale
 
     title_clip = title_clip.resize(lambda t: resize(t))
     title_clip = title_clip.set_position("center")
 
-    # fadeout animation
-    title_clip = title_clip.crossfadeout(fade_duration)
+    # slide right animation
+    def slide_out_position(t):
+        if t <= audio_clip.duration:
+            return ("center", "center")
+        else:
+            progress = min((t - audio_clip.duration) / outro_duration, 1)
+            ease_out = 1 - (1 - progress) ** 2  # ease-out
+
+            # map out x coordinate
+            start_x = (video_width - title_clip.w) // 2
+            end_x = video_width * 2  # offscreen right
+            current_x = start_x + ease_out * (end_x - start_x)
+            return (current_x, "center")
+
+    # write if statement depending on animation
+    if outro_animation == "fade_out":
+        title_clip = title_clip.crossfadeout(outro_duration)
+    elif outro_animation == "slide_right":
+        title_clip = title_clip.set_position(slide_out_position)
+
+    # add audio and sound effects
+    intro_sfx = AudioFileClip("audio/idea.mp3").volumex(0.5).set_start(0)
+    outro_sfx = AudioFileClip("audio/whoosh.mp3").volumex(0.5).set_start(audio_clip.duration)
+    sfx_clips = [intro_sfx, outro_sfx]
+
+    # combine main audio with sfx
+    audio = CompositeAudioClip([audio_clip] + sfx_clips)
+    title_clip = title_clip.set_audio(audio)
 
     return title_clip
 
