@@ -26,6 +26,17 @@ title_image_path = generate_reddit_title_image(reddit_object)
 title_audio_path = folder_path / f"{reddit_object.name}_title-audio.mp3"
 streamlabs_tts(reddit_object.title, config["tts"]["voice_choice"], title_audio_path)
 
+# generate title image animation
+title_clip = generate_title_video(title_image_path, title_audio_path)
+
+# generate post description 
+post_desc_audio_path = folder_path / f"{reddit_object.name}_post_desc.mp3"
+post_desc = input("Include the post description? (y/n): ")
+
+if post_desc == 'y':
+    streamlabs_tts(reddit_object.selftext, config["tts"]["voice_choice"], post_desc_audio_path)
+    
+
 # generate comments audio
 comment_audio_paths  = []
 comments =  get_reddit_post_comments(url)
@@ -43,19 +54,18 @@ for idx, comment in enumerate(comments, start=1):
 # combine all comments for captioning
 all_comments_path = folder_path / f"{reddit_object.name}_all_comments.mp3"
 all_comments_string = "\n".join([f"{idx+1}. {comment}" for idx, comment in enumerate(comments)])
-combine_audio_clips(all_comments_path, comment_audio_paths)
-
-# generate title image animation
-title_clip = generate_title_video(title_image_path, title_audio_path)
-
-transcribed_text = get_transcribed_text(all_comments_path, all_comments_string)
-text_clips = get_text_clips(transcribed_text, title_clip.duration)
+if comments:
+    combine_audio_clips(all_comments_path, comment_audio_paths)
+    transcribed_comments = get_transcribed_text(all_comments_path, all_comments_string)
+    comment_clips = get_text_clips(transcribed_comments, title_clip.duration)
+else:
+    comment_clips = []
 
 # background
 background = ColorClip((1080, 1920), color=(255, 255, 255)).set_duration(70)
 
 # compile final video
-compile_final_video(reddit_object.name, background, title_clip, text_clips, all_comments_path)
+compile_final_video(reddit_object.name, background, title_clip, comment_clips, all_comments_path)
 
 
 
