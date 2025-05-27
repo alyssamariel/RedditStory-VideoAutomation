@@ -52,7 +52,7 @@ for idx, comment in enumerate(comments, start=1):
         print(f"Failed to generate TTS for comment {idx}: {e}")
 
 # combine all comments for captioning
-all_comments_path = folder_path / f"{reddit_object.name}_all_comments.mp3"
+all_comments_path = folder_path / f"{reddit_object.name}_all_comments.mp3" if comment_audio_paths else ""
 all_comments_string = "\n".join([f"{idx+1}. {comment}" for idx, comment in enumerate(comments)])
 if comments:
     combine_audio_clips(all_comments_path, comment_audio_paths)
