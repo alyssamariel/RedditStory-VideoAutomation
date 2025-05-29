@@ -1,33 +1,67 @@
-import os
 import random
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-def get_random_video_path(folder):
-    videos = [os.path.join(folder, f) for f in os.listdir(folder)
-              if f.lower().endswith(('.mp4', '.mov', '.avi', '.mkv'))]
-    if not videos:
-        raise ValueError("No video files found in the folder.")
-    return random.choice(videos)
-
 def get_random_clip(folder, duration):
-    while True:
-        path = get_random_video_path(folder)
-        try:
-            clip = VideoFileClip(path)
-            if clip.duration > duration:
-                start = random.uniform(0, clip.duration - duration)
-                return clip.subclip(start, start + duration)
-            else:
-                print(f"Skipping short video: {path}")
-        except Exception as e:
-            print(f"Error loading video {path}: {e}")
+    # filter videos longer than duration
+    valid_videos = []
+    for path in folder.iterdir():
+        if path.suffix.lower() in ('.mp4', '.mov', '.avi', '.mkv'):
+            try:
+                clip = VideoFileClip(str(path))
+                if clip.duration > duration:
+                    valid_videos.append(path)
+                clip.close()
+            except Exception:
+                continue
 
-def create_mixed_video(folder, clip_duration, total_duration):
+    if not valid_videos:
+        raise ValueError(f"No suitable video longer than {duration}s in folder {folder}")
+
+    # pick a random clip
+    clip = VideoFileClip(str(random.choice(valid_videos)))
+
+    # pick subclip after resizing/cropping
+    start = random.uniform(0, clip.duration - duration)
+    return clip.subclip(start, start + duration)
+
+
+# select random folder that's not consecutive
+def pick_folder(folder_pool, all_folders, last_folder):
+    # if folder pool is empty, replenish
+    if not folder_pool:
+        folder_pool = all_folders.copy()
+
+    # avoid consecutive folders
+    filtered_pool = [f for f in folder_pool if f != last_folder]
+    if not filtered_pool:
+        filtered_pool = [f for f in all_folders if f != last_folder]
+
+    # pick a folder, then remove the folder in the folder pool
+    chosen_folder = random.choice(filtered_pool)
+    if chosen_folder in folder_pool:
+        folder_pool.remove(chosen_folder)
+
+    return chosen_folder, folder_pool
+
+# mix all selected videos 
+def create_mixed_video(folders, clip_duration, total_duration):
+    folder_pool = folders.copy()
+    last_folder = None
     clips = []
-    for _ in range(total_duration // clip_duration):
-        clip = get_random_clip(folder, clip_duration)
-        clips.append(clip)
-    final_clip = concatenate_videoclips(clips, method="compose")
-    return final_clip
 
+    # full-length clips
+    for _ in range(total_duration // clip_duration):
+        chosen_folder, folder_pool = pick_folder(folder_pool, folders, last_folder)
+        clip = get_random_clip(chosen_folder, clip_duration)
+        clips.append(clip)
+        last_folder = chosen_folder
+
+    # remainder clip (if any)
+    remainder = total_duration % clip_duration
+    if remainder > 0:
+        chosen_folder, _ = pick_folder(folder_pool, folders, last_folder)
+        clip = get_random_clip(chosen_folder, remainder)
+        clips.append(clip)
+
+    return concatenate_videoclips(clips, method="compose")
 
