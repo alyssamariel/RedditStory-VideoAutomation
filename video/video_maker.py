@@ -86,7 +86,6 @@ def generate_title_video(title_image_path, title_audio_path, background=(1080, 1
     return title_clip
 
 def compile_final_video(file_name, video_background, title_clip, text_clips, all_comments_path):
-    print (all_comments_path)
     comments_audio = (AudioFileClip(str(all_comments_path)).set_start(title_clip.duration) if all_comments_path else None)
     all_audios = [title_clip.audio] + ([comments_audio] if comments_audio else [])
 

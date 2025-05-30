@@ -1,9 +1,10 @@
 from title_image.title_maker import generate_reddit_title_image
 from video.video_maker import generate_title_video, compile_final_video
 from video.caption_maker import get_transcribed_text, get_text_clips
+from video.background_maker import create_mixed_video
 from reddit_api import get_reddit_object, get_reddit_post_comments
 from audio.streamlabs_tts import streamlabs_tts
-from audio.audio_func import combine_audio_clips
+from audio.audio_func import combine_audio_clips, get_duration
 from moviepy.editor import *
 from pathlib import Path
 import configparser
@@ -62,7 +63,10 @@ else:
     comment_clips = []
 
 # background
-background = ColorClip((1080, 1920), color=(255, 255, 255)).set_duration(70)
+video_folders = [Path("background") / name for name in ["battery", "jelly", "ladder", "roof"]]
+clip_duration = 15
+
+background = create_mixed_video(video_folders, clip_duration, title_clip.duration + get_duration(all_comments_path))
 
 # compile final video
 compile_final_video(reddit_object.name, background, title_clip, comment_clips, all_comments_path)

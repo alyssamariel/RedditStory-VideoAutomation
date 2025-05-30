@@ -36,3 +36,6 @@ def combine_audio_clips(final_path, audio_paths):
 
     combined_audio = concatenate_audioclips(audio_clips)
     combined_audio.write_audiofile(str(final_path))
+
+def get_duration(path):
+    return AudioFileClip(str(path)).duration

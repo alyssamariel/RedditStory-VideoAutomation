@@ -1,5 +1,11 @@
 import random
 from moviepy.editor import VideoFileClip, concatenate_videoclips
+from pathlib import Path
+
+VIDEO_FOLDER = video_folders = [Path("..") / "background" / name for name in ["battery", "jelly", "ladder", "roof"]]
+  # Change this to your video folder
+CLIP_DURATION = 15                   # seconds per video segment
+TOTAL_DURATION = 60 
 
 def get_random_clip(folder, duration):
     # filter videos longer than duration
@@ -50,7 +56,7 @@ def create_mixed_video(folders, clip_duration, total_duration):
     clips = []
 
     # full-length clips
-    for _ in range(total_duration // clip_duration):
+    for _ in range(int(total_duration // clip_duration)):
         chosen_folder, folder_pool = pick_folder(folder_pool, folders, last_folder)
         clip = get_random_clip(chosen_folder, clip_duration)
         clips.append(clip)
@@ -64,4 +70,5 @@ def create_mixed_video(folders, clip_duration, total_duration):
         clips.append(clip)
 
     return concatenate_videoclips(clips, method="compose")
+
 
