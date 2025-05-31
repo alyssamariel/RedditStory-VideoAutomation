@@ -1,6 +1,7 @@
 from moviepy.editor import *
 from moviepy.audio.fx.volumex import volumex
 import numpy as np
+from pydub import AudioSegment
 
 def make_silence(duration=0.5, fps=44100, n_channels=2):
     def make_frame(t):
@@ -13,29 +14,29 @@ def make_silence(duration=0.5, fps=44100, n_channels=2):
 
 
 def combine_audio_clips(final_path, audio_paths):
-    audio_clips = []
-    total_duration = 0
+    combined = AudioSegment.empty()
+    total_duration = 0  # in milliseconds
 
     for i, path in enumerate(audio_paths):
-        clip = AudioFileClip(str(path))
-        silence = make_silence(0.5, clip.fps, clip.reader.nchannels)
+        clip = AudioSegment.from_file(path)
+        clip_duration = len(clip)  # in milliseconds
 
-        silence_duration = 0.5 if i < len(audio_paths) - 1 else 0
+        # Add 500ms silence between clips, but not after the last one
+        silence = AudioSegment.silent(duration=500) if i < len(audio_paths) - 1 else AudioSegment.empty()
 
-        if total_duration + clip.duration + silence_duration > 60:
-            clip.close()
+        # Check if adding this clip (plus silence) would exceed 60 seconds
+        if total_duration + clip_duration + len(silence) > 60000:
             break
 
-        audio_clips.append(clip)
-        total_duration += clip.duration
+        combined += clip
+        total_duration += clip_duration
 
-        if silence_duration > 0:
-            silence = silence = make_silence(0.5, clip.fps, clip.reader.nchannels)
-            audio_clips.append(silence)
-            total_duration += silence_duration
+        if len(silence) > 0:
+            combined += silence
+            total_duration += len(silence)
 
-    combined_audio = concatenate_audioclips(audio_clips)
-    combined_audio.write_audiofile(str(final_path))
+    # Export the final audio
+    combined.export(final_path, format="mp3")  # or "wav"
 
 def get_duration(path):
     return AudioFileClip(str(path)).duration
