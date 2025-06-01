@@ -3,16 +3,6 @@ from moviepy.audio.fx.volumex import volumex
 import numpy as np
 from pydub import AudioSegment
 
-def make_silence(duration=0.5, fps=44100, n_channels=2):
-    def make_frame(t):
-        if np.isscalar(t):
-            return np.zeros((n_channels,))
-        else:
-            return np.zeros((len(t), n_channels))
-    silence = AudioClip(make_frame=make_frame, duration=duration, fps=fps)
-    return silence
-
-
 def combine_audio_clips(final_path, audio_paths):
     combined = AudioSegment.empty()
     total_duration = 0  # in milliseconds
@@ -35,7 +25,6 @@ def combine_audio_clips(final_path, audio_paths):
             combined += silence
             total_duration += len(silence)
 
-    # Export the final audio
     combined.export(final_path, format="mp3")  # or "wav"
 
 def get_duration(path):
