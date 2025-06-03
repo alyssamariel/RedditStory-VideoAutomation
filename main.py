@@ -42,13 +42,14 @@ if post_desc == 'y':
 comment_audio_paths  = []
 comments =  get_reddit_post_comments(url)
 
-for idx, comment in enumerate(comments, start=1):
+idx = 1
+for comment in comments:
     filename = folder_path / f"{reddit_object.name}_comment_{idx}.mp3"
     try:
         streamlabs_tts(f"{idx}. {comment}", config["tts"]["voice_choice"], filename)
-        
         comment_audio_paths.append(filename)
         print(f"Saved: {filename}")
+        idx += 1
     except Exception as e:
         print(f"Failed to generate TTS for comment {idx}: {e}")
 
