@@ -4,20 +4,21 @@ import numpy as np
 from pydub import AudioSegment
 
 # combine audio clips of all commetns
-def combine_audio_clips(final_path, audio_paths):
+def combine_audio_clips(final_path, audio_paths, silence_duration, clip_limit=60000):
     combined = AudioSegment.empty()
     total_duration = 0
     has_exceeded_limit = False
+    clip_limit_ms = int(clip_limit) * 1000
 
     for i, path in enumerate(audio_paths):
         clip = AudioSegment.from_file(path)
         clip_duration = len(clip)
 
         # add silence
-        silence = AudioSegment.silent(duration=500) if i < len(audio_paths) - 1 else AudioSegment.empty()
+        silence = AudioSegment.silent(duration=silence_duration) if i < len(audio_paths) - 1 else AudioSegment.empty()
 
         # allow a segment of clip to go pass 1 min mark once
-        if total_duration + clip_duration + len(silence) > 60000:
+        if total_duration + clip_duration + len(silence) > clip_limit_ms:
             if has_exceeded_limit:
                 break
             else:

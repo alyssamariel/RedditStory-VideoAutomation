@@ -2,6 +2,7 @@ from title_image.title_maker import generate_reddit_title_image
 from video.video_maker import generate_title_video, compile_final_video
 from video.caption_maker import get_transcribed_text, get_text_clips
 from video.background_maker import create_mixed_video
+from utils.text_func import clean_text
 from reddit_api import get_reddit_object, get_reddit_post_comments
 from audio.streamlabs_tts import streamlabs_tts
 from audio.audio_func import combine_audio_clips, get_duration
@@ -44,27 +45,40 @@ comments =  get_reddit_post_comments(url)
 
 idx = 1
 for comment in comments:
-    filename = folder_path / f"{reddit_object.name}_comment_{idx}.mp3"
-    try:
-        streamlabs_tts(f"{idx}. {comment}", config["tts"]["voice_choice"], filename)
-        comment_audio_paths.append(filename)
-        print(f"Saved: {filename}")
-        idx += 1
-    except Exception as e:
-        print(f"Failed to generate TTS for comment {idx}: {e}")
+    # split the paragraphs
+    paragraphs = [p.strip() for p in clean_text(comment).split("\n\n") if p.strip()]
+    
+    for p_idx, paragraph in enumerate(paragraphs, 1):
+        filename = folder_path / f"{reddit_object.name}_comment_{idx}_{p_idx}.mp3"
+        try:
+            # prefix only the first paragraph with the idx
+            if p_idx == 1:
+                text = f"{idx}. {paragraph}"
+            else:
+                text = paragraph
+
+            streamlabs_tts(text, config["tts"]["voice_choice"], filename)
+            comment_audio_paths.append(filename)
+            print(f"Saved: {filename}")
+        except Exception as e:
+            print(f"Failed to generate TTS for comment {idx}.{p_idx}: {e}")
+    idx += 1
+
 
 # combine all comments for captioning
+clip_limit = input("how many seconds should the clip be: ")
+
 all_comments_path = folder_path / f"{reddit_object.name}_all_comments.mp3" if comment_audio_paths else ""
 all_comments_string = "\n".join([f"{idx+1}. {comment}" for idx, comment in enumerate(comments)])
 if comments:
-    combine_audio_clips(all_comments_path, comment_audio_paths)
+    combine_audio_clips(all_comments_path, comment_audio_paths, 500, clip_limit)
     transcribed_comments = get_transcribed_text(all_comments_path, all_comments_string)
     comment_clips = get_text_clips(transcribed_comments, title_clip.duration)
 else:
     comment_clips = []
 
 # background
-video_folders = [Path("background") / name for name in ["battery", "jelly", "ladder", "roof"]]
+video_folders = [Path("background") / name for name in ["assemble", "battery", "ladder", "roof"]]
 clip_duration = 15
 
 background = create_mixed_video(video_folders, clip_duration, title_clip.duration + get_duration(all_comments_path))
