@@ -1,9 +1,7 @@
 import imgkit
-from bs4 import BeautifulSoup
-import html
+from bs4 import BeautifulSoup, NavigableString
 import os
 import configparser
-import re
 from pathlib import Path
 
 config = configparser.ConfigParser()
@@ -41,7 +39,7 @@ def generate_reddit_title_image (submission):
     for field_id, value in fields.items():
         p = soup.find("p", id=field_id)
         if p:
-            p.string = html.escape(str(value))
+            p.string = NavigableString(str(value))
     
     # save changes
     with open(html_template_path, "w", encoding="utf-8") as file:

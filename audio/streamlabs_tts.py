@@ -21,6 +21,7 @@ def streamlabs_tts(text: str, voice: str, output_file):
         voice_data = requests.get(response.json()["speak_url"])
         with open(output_file, "wb") as f:
             f.write(voice_data.content)
+        return True
 
     except (KeyError, JSONDecodeError):
         try:
@@ -28,3 +29,4 @@ def streamlabs_tts(text: str, voice: str, output_file):
                 raise ValueError("Please specify a text to convert to speech.")
         except (KeyError, JSONDecodeError):
             print("Error occurred calling Streamlabs Polly")
+        return False
