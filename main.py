@@ -36,6 +36,7 @@ post_desc_audio_path = folder_path / f"{reddit_object.name}_post_desc.mp3"
 post_desc = input("Include the post description? (y/n): ")
 
 if post_desc == 'y':
+    paragraphs = [p.strip() for p in clean_text(reddit_object.selftext).split("\n\n") if p.strip()]
     streamlabs_tts(reddit_object.selftext, config["tts"]["voice_choice"], post_desc_audio_path)
     
 
