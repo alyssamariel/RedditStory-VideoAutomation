@@ -85,7 +85,7 @@ clip_duration = 15
 background = create_mixed_video(video_folders, clip_duration, title_clip.duration + get_duration(all_comments_path))
 
 # compile final video
-compile_final_video(reddit_object.name, background, title_clip, comment_clips, all_comments_path)
+compile_final_video(reddit_object.title, background, title_clip, comment_clips, all_comments_path)
 
 
 
