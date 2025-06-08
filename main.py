@@ -81,8 +81,9 @@ else:
 # background
 video_folders = [Path("background") / name for name in ["assemble", "battery", "ladder", "roof"]]
 clip_duration = 15
+speed = 1.25
 
-background = create_mixed_video(video_folders, clip_duration, title_clip.duration + get_duration(all_comments_path))
+background = create_mixed_video(video_folders, clip_duration, title_clip.duration + get_duration(all_comments_path), speed)
 
 # compile final video
 compile_final_video(reddit_object.title, background, title_clip, comment_clips, all_comments_path)
