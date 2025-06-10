@@ -84,16 +84,18 @@ def generate_title_video(title_image_path, title_audio_path, background=(1080, 1
     title_clip = title_clip.set_audio(audio)
 
     return title_clip
-
-def compile_final_video(file_name, video_background, title_clip, text_clips, all_comments_path):
-    comments_audio = (AudioFileClip(str(all_comments_path)).set_start(title_clip.duration) if all_comments_path else None)
-    all_audios = [title_clip.audio] + ([comments_audio] if comments_audio else [])
+    #compile_final_video(reddit_object.name, background, title_clip, post_desc_clips, all_post_desc_path, comment_clips, all_comments_path)
+def compile_final_video(file_name, video_background, title_clip, post_desc_clips, post_desc_path, comment_text_clips, all_comments_path):
+    post_desc_audio = (AudioFileClip(str(post_desc_path)).set_start(title_clip.duration) if post_desc_path else None)
+    comments_audio = (AudioFileClip(str(all_comments_path)).set_start(title_clip.duration + (post_desc_audio.duration if post_desc_audio else 0)) if all_comments_path else None)
+    
+    all_audios = [title_clip.audio] + ([post_desc_audio] if post_desc_audio else []) + ([comments_audio] if comments_audio else [])
 
     # combine the audio and video of the title and comments
-    final_video = CompositeVideoClip([video_background, title_clip] + text_clips)
+    final_video = CompositeVideoClip([video_background, title_clip] + post_desc_clips + comment_text_clips)
     final_audio = CompositeAudioClip(all_audios)
 
     # set audio and duration and render
-    final_video = final_video.set_audio(final_audio).set_duration(max(final_video.duration, title_clip.duration + (comments_audio.duration if comments_audio else 0)))
+    final_video = final_video.set_audio(final_audio).set_duration(max(final_video.duration, title_clip.duration + (post_desc_audio.duration if post_desc_audio else 0) + (comments_audio.duration if comments_audio else 0)))
 
     final_video.write_videofile((file_name + ".mp4"), fps=24)
