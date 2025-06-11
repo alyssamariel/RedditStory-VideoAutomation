@@ -2,9 +2,10 @@ from moviepy.editor import *
 from moviepy.audio.fx.volumex import volumex
 import numpy as np
 from pydub import AudioSegment
+import os
 
 # combine audio clips of all commetns
-def combine_audio_clips(final_path, audio_paths, silence_duration, clip_limit=60000):
+def combine_audio_clips(final_path, audio_paths, silence_duration, clip_limit):
     combined = AudioSegment.empty()
     total_duration = 0
     has_exceeded_limit = False
@@ -37,4 +38,7 @@ def combine_audio_clips(final_path, audio_paths, silence_duration, clip_limit=60
     combined.export(final_path, format="mp3")
 
 def get_duration(path):
+    if not os.path.isfile(path):
+        print(f"Warning: Audio file not found at {path}. Returning duration 0.")
+        return 0
     return AudioFileClip(str(path)).duration
